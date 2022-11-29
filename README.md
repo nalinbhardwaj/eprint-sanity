@@ -1,42 +1,19 @@
 
-# arxiv-sanity-lite
+# [ePrint Sanity](eprint-sanity.com)
 
-A much lighter-weight arxiv-sanity from-scratch re-write. Periodically polls arxiv API for new papers. Then allows users to tag papers of interest, and recommends new papers for each tag based on SVMs over tfidf features of paper abstracts. Allows one to search, rank, sort, slice and dice these results in a pretty web UI. Lastly, arxiv-sanity-lite can send you daily emails with recommendations of new papers based on your tags. Curate your tags, track recent papers in your area, and don't miss out!
+ePrint Sanity is a web interface that attempts to tame the overwhelming flood of papers on IACR Cryptology ePrint Archive. It allows researchers to keep track of recent papers, search for papers, sort papers by similarity to any paper, see recent popular papers, to add papers to a personal library, and to get personalized recommendations of (new or old) ePrint papers. This is a fork of [@karpathy](https://twitter.com/karpathy)'s [ePrint Sanity](https://arxiv-sanity-lite.com).
 
-I am running a live version of this code on [arxiv-sanity-lite.com](https://arxiv-sanity-lite.com).
+I am running a live version of this code on [eprint-sanity.com](eprint-sanity.com).
 
-![Screenshot](screenshot.jpg)
+![Screenshot](screenshot.png)
 
 #### To run
 
-To run this locally I usually run the following script to update the database with any new papers. I typically schedule this via a periodic cron job:
-
-```bash
-#!/bin/bash
-
-python3 arxiv_daemon.py --num 2000
-
-if [ $? -eq 0 ]; then
-    echo "New papers detected! Running compute.py"
-    python3 compute.py
-else
-    echo "No new papers were added, skipping feature computation"
-fi
-```
-
-You can see that updating the database is a matter of first downloading the new papers via the arxiv api using `arxiv_daemon.py`, and then running `compute.py` to compute the tfidf features of the papers. Finally to serve the flask server locally we'd run something like:
-
-```bash
-export FLASK_APP=serve.py; flask run
-```
-
-All of the database will be stored inside the `data` directory. Finally, if you'd like to run your own instance on the interwebs I recommend simply running the above on a [Linode](https://www.linode.com), e.g. I am running this code currently on the smallest "Nanode 1 GB" instance indexing about 30K papers, which costs $5/month.
-
-(Optional) Finally, if you'd like to send periodic emails to users about new papers, see the `send_emails.py` script. You'll also have to `pip install sendgrid`. I run this script in a daily cron job.
+To run, use `make fun` periodically and `make up` to host the server.
 
 #### Requirements
 
- Install via requirements:
+ Install via requirements, recommend a venv:
 
  ```bash
  pip install -r requirements.txt

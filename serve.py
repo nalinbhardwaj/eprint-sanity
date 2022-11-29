@@ -22,6 +22,8 @@ from flask import session
 
 from aslite.db import get_papers_db, get_metas_db, get_tags_db, get_last_active_db, get_email_db
 from aslite.db import load_features
+from eprint_daemon import parse_date_string
+from datetime import datetime, timezone, timedelta
 
 # -----------------------------------------------------------------------------
 # inits and globals
@@ -90,15 +92,16 @@ def render_pid(pid):
     thumb_path = 'static/thumb/' + pid + '.jpg'
     thumb_url = thumb_path if os.path.isfile(thumb_path) else ''
     d = pdb[pid]
+    nice_date = "{:%d %b %Y}".format(parse_date_string(d['date'][1]))
     return dict(
         weight = 0.0,
-        id = d['_id'],
-        title = d['title'],
-        time = d['_time_str'],
-        authors = ', '.join(a['name'] for a in d['authors']),
-        tags = ', '.join(t['term'] for t in d['tags']),
+        id = d['identifier'][0].split('eprint.iacr.org/')[1],
+        title = d['title'][0],
+        time = nice_date,
+        authors = ', '.join(d['creator']),
+        tags = ', '.join(d['subject']),
         utags = [t for t, pids in tags.items() if pid in pids],
-        summary = d['summary'],
+        summary = d['description'],
         thumb_url = thumb_url,
     )
 
@@ -111,13 +114,16 @@ def random_rank():
 
 def time_rank():
     mdb = get_metas()
-    ms = sorted(mdb.items(), key=lambda kv: kv[1]['_time'], reverse=True)
-    tnow = time.time()
+    ms = sorted(mdb.items(), key=lambda kv: kv[1]['date'], reverse=True)
+    tnow = datetime.now(timezone.utc)
     pids = [k for k, v in ms]
-    scores = [(tnow - v['_time'])/60/60/24 for k, v in ms] # time delta in days
+    scores = [(tnow - parse_date_string(v['date'])).total_seconds() / (60 * 60 * 24) for k, v in ms] # time delta in days
     return pids, scores
 
+FIX_PID = lambda pid: 'https://eprint.iacr.org/' + pid if len(pid) > 0 and not pid.startswith('https://eprint.iacr.org') else ''
+
 def svm_rank(tags: str = '', pid: str = '', C: float = 0.01):
+    pid = FIX_PID(pid)
 
     # tag can be one tag or a few comma-separated tags or 'all' for all tags we have in db
     # pid can be a specific paper id to set as positive for a kind of nearest neighbor search
@@ -143,6 +149,7 @@ def svm_rank(tags: str = '', pid: str = '', C: float = 0.01):
         for tag, pids in tags_db.items():
             if tag in tags_filter_to:
                 for pid in pids:
+                    pid = FIX_PID(pid)
                     y[ptoi[pid]] = 1.0
 
     if y.sum() == 0:
@@ -180,9 +187,12 @@ def search_rank(q: str = ''):
     pairs = []
     for pid, p in pdb.items():
         score = 0.0
-        score += 10.0 * matchu(' '.join([a['name'] for a in p['authors']]))
-        score += 20.0 * matchu(p['title'])
-        score += 1.0 * match(p['summary'])
+        author_str = ' '.join(p['creator'])
+        title_str = p['title'][0] if len(p['title']) > 0 else ''
+        desc_str = p['description'][0] if len(p['description']) > 0 else ''
+        score += 10.0 * matchu(author_str)
+        score += 20.0 * matchu(title_str)
+        score += 1.0 * match(desc_str)
         if score > 0:
             pairs.append((score, pid))
 
@@ -249,9 +259,9 @@ def main():
     if opt_time_filter:
         mdb = get_metas()
         kv = {k:v for k,v in mdb.items()} # read all of metas to memory at once, for efficiency
-        tnow = time.time()
-        deltat = int(opt_time_filter)*60*60*24 # allowed time delta in seconds
-        keep = [i for i,pid in enumerate(pids) if (tnow - kv[pid]['_time']) < deltat]
+        tnow = datetime.now(timezone.utc)
+        deltat = timedelta(days=int(opt_time_filter)) # allowed time delta in seconds
+        keep = [i for i,pid in enumerate(pids) if (tnow - parse_date_string(kv[pid]['date'])) < deltat]
         pids, scores = [pids[i] for i in keep], [scores[i] for i in keep]
 
     # optionally hide papers we already have
@@ -304,6 +314,7 @@ def inspect():
 
     # fetch the paper of interest based on the pid
     pid = request.args.get('pid', '')
+    pid = FIX_PID(pid)
     pdb = get_papers()
     if pid not in pdb:
         return "error, malformed pid" # todo: better error handling
@@ -345,21 +356,24 @@ def stats():
     context = default_context()
     mdb = get_metas()
     kv = {k:v for k,v in mdb.items()} # read all of metas to memory at once, for efficiency
-    times = [v['_time'] for v in kv.values()]
-    tstr = lambda t: time.strftime('%b %d %Y', time.localtime(t))
+    times = [v['date'] for v in kv.values()]
 
     context['num_papers'] = len(kv)
     if len(kv) > 0:
-        context['earliest_paper'] = tstr(min(times))
-        context['latest_paper'] = tstr(max(times))
+        context['earliest_paper'] = parse_date_string(min(times))
+        context['latest_paper'] = parse_date_string(max(times))
     else:
         context['earliest_paper'] = 'N/A'
         context['latest_paper'] = 'N/A'
 
     # count number of papers from various time deltas to now
-    tnow = time.time()
+    tnow = datetime.now(timezone.utc)
     for thr in [1, 6, 12, 24, 48, 72, 96]:
-        context['thr_%d' % thr] = len([t for t in times if t > tnow - thr*60*60])
+        deltat = timedelta(hours=thr)
+        # tnow = datetime.now(timezone.utc)
+        # deltat = timedelta(days=int(opt_time_filter)) # allowed time delta in seconds
+        # keep = [i for i,pid in enumerate(pids) if (tnow - parse_date_string(kv[pid]['date'])) < deltat]
+        context['thr_%d' % thr] = len([t for t in times if (tnow - parse_date_string(t)) < deltat])
 
     return render_template('stats.html', **context)
 
@@ -371,8 +385,9 @@ def about():
 # -----------------------------------------------------------------------------
 # tag related endpoints: add, delete tags for any paper
 
-@app.route('/add/<pid>/<tag>')
-def add(pid=None, tag=None):
+@app.route('/add/<pid1>/<pid2>/<tag>')
+def add(pid1=None, pid2=None, tag=None):
+    pid = pid1 + '/' + pid2
     if g.user is None:
         return "error, not logged in"
     if tag == 'all':
@@ -400,8 +415,9 @@ def add(pid=None, tag=None):
     print("added paper %s to tag %s for user %s" % (pid, tag, g.user))
     return "ok: " + str(d) # return back the user library for debugging atm
 
-@app.route('/sub/<pid>/<tag>')
-def sub(pid=None, tag=None):
+@app.route('/sub/<pid1>/<pid2>/<tag>')
+def sub(pid1=None, pid2=None, tag=None):
+    pid = pid1 + '/' + pid2
     if g.user is None:
         return "error, not logged in"
 

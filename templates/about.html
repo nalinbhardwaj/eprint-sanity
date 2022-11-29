@@ -1,27 +1,35 @@
-{% extends "base.html" %}
-
-{% block variables %}
-{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block variables %} {% endblock %} {% block content
+%}
 <div id="aboutwrap">
-    <div>
-        A much lighter-weight arxiv-sanity from-scratch re-write. Periodically polls arxiv API for new papers. Then allows users to tag papers of interest, and recommends new papers for each tag based on SVMs over tfidf features of paper abstracts. Allows one to search, rank, sort, slice and dice these results in a pretty web UI. Lastly, arxiv-sanity-lite can send you daily emails with recommendations of new papers based on your tags. Curate your tags, track recent papers in your area, and don't miss out!
-    </div>
+  <div>
+    ePrint Sanity is a web interface that attempts to tame the overwhelming
+    flood of papers on IACR Cryptology ePrint Archive. It allows researchers to
+    keep track of recent papers, search for papers, sort papers by similarity to
+    any paper, see recent popular papers, to add papers to a personal library,
+    and to get personalized recommendations of (new or old) ePrint papers.
+  </div>
 
-    <br>
-    <div>
-        This particular instance indexes papers from cs.CV, cs.LG, cs.CL, cs.AI, cs.NE, cs.RO,
-        and only since early-ish 2021.
-    </div>
+  <br />
+  <div>
+    Periodically polls ePrint OAI API for new papers. Then allows users to tag
+    papers of interest, and recommends new papers for each tag based on SVMs
+    over tfidf features of paper abstracts. Allows one to search, rank, sort,
+    slice and dice these results in a pretty web UI. Lastly, ePrint Sanity can
+    send you daily emails with recommendations of new papers based on your tags.
+    Curate your tags, track recent papers in your area, and don't miss out!
+  </div>
 
-    <br>
-    <div>The code for this website is open source at Github under <a href="https://github.com/karpathy/arxiv-sanity-lite">arxiv-sanity-lite</a>.</div>
+  <br />
+  <div>
+    The code for this website is open source at Github under
+    <a href="https://github.com/nalinbhardwaj/eprint-sanity">eprint-sanity</a>.
+  </div>
 
-    <br>
-    <div>Developed in spare time as a labor of love by <a href="https://twitter.com/karpathy">@karpathy</a>.</div>
+  <br />
+  <div>
+    This is a fork of <a href="https://twitter.com/karpathy">@karpathy</a>'s
+    <a href="https://arxiv-sanity-lite.com">arxiv-sanity</a> project, maintained
+    by <a href="https://twitter.com/nibnalin">@nibnalin</a>.
+  </div>
 </div>
-{% endblock %}
-
-{% block elements %}
-{% endblock %}
+{% endblock %} {% block elements %} {% endblock %}

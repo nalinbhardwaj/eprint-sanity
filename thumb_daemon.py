@@ -26,7 +26,7 @@ pdb = get_papers_db()
 n = len(pdb)
 mdb = get_metas_db()
 metas = list(mdb.items())
-metas.sort(key=lambda kv: kv[1]['_time'], reverse=True) # most recent papers first
+metas.sort(key=lambda kv: kv[1]['date'], reverse=True) # most recent papers first
 keys = [k for k,v in metas[:5000]] # only the most recent papers
 
 for i, key in enumerate(keys):
@@ -42,7 +42,7 @@ for i, key in enumerate(keys):
     print("%d/%d: paper to process: %s" % (i, n, key))
 
     # get the link to the pdf
-    url = p['link'].replace('abs', 'pdf')
+    url = p['identifier'][0] + '.pdf'
 
     # attempt to download the pdf
     print("attempting to download pdf from: ", url)

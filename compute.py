@@ -14,7 +14,7 @@ from aslite.db import get_papers_db, save_features
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Arxiv Computor')
+    parser = argparse.ArgumentParser(description='eprint sanity Computor')
     parser.add_argument('-n', '--num', type=int, default=20000, help='number of tfidf features')
     parser.add_argument('--min_df', type=int, default=5, help='min df')
     parser.add_argument('--max_df', type=float, default=0.1, help='max df')
@@ -47,8 +47,10 @@ if __name__ == '__main__':
         # yield the abstracts of the papers
         for p in keys:
             d = pdb[p]
-            author_str = ' '.join([a['name'] for a in d['authors']])
-            yield ' '.join([d['title'], d['summary'], author_str])
+            author_str = ' '.join(d['creator'])
+            title_str = d['title'][0] if len(d['title']) > 0 else ''
+            desc_str = d['description'][0] if len(d['description']) > 0 else ''
+            yield ' '.join([title_str, desc_str, author_str])
 
     print("training tfidf vectors...")
     v.fit(make_corpus(training=True))
