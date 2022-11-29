@@ -3,6 +3,7 @@
 up:
 	python3 eprint_daemon.py --num 2000
 	python3 compute.py
+	python3 twitter_daemon.py
 
 # I use this to run the server
 fun:

@@ -6,3 +6,5 @@ data
 secret_key.txt
 venv
 tmp
+launch.json
+twitter.txt
