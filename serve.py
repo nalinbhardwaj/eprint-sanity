@@ -206,7 +206,7 @@ def weight_tweet(tweet):
     papers = get_papers()
     weight = 10.0
     # some tweets are really boring, like an rt
-    if "arxiv" in tweet['user_screen_name'].lower():
+    if "IACR" in tweet['user_screen_name'].lower():
         weight -= 1
 
     if (tweet['text'].lower().startswith('rt') or 
@@ -220,7 +220,7 @@ def weight_tweet(tweet):
     for pid in tweet['pids']:
         if pid not in papers:
             continue
-        title_words += len(tprepro(papers[pid]['title']))
+        title_words += len(tprepro(papers[pid]['title'][0]))
     comment_words = tweet_words - title_words # how much does the tweet have other than just the actual title of the article?
 
     if comment_words < 3: 

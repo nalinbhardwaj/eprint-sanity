@@ -19,15 +19,12 @@ sleep_time = 60*10 # in seconds, between twitter API calls. Default rate limit i
 # convenience functions
 # -----------------------------------------------------------------------------
 
-def extract_arxiv_pids(r):
+def extract_eprint_pids(r):
   pids = []
   for u in r.get("entities",{}).get("urls",[]):
-    m = re.search('arxiv.org/(?:abs|pdf)/(.+)', u.get('unwound_url',u.get('expanded_url','')))
+    m = re.search('eprint.iacr.org/([0-9]+\/[0-9]+)(?:.pdf)?', u.get('unwound_url',u.get('expanded_url','')))
     if m:
-      pids.append(m.group(1))
-    if m: 
-      rawid = m.group(1).strip(".pdf")
-      pids.append(rawid)
+      pids.append('https://eprint.iacr.org/' + m.group(1))
   return pids
 
 def get_latest_or_loop(q, start_datetime=None):
@@ -37,7 +34,7 @@ def get_latest_or_loop(q, start_datetime=None):
   results = []
   next_token = None
 
-  q = "url:arxiv.org lang:en"
+  q = "url:eprint.iacr.org lang:en"
   bearer = open('twitter.txt', 'r').read().splitlines()[0]
   client = tweepy.Client(bearer)
   
@@ -49,7 +46,7 @@ def get_latest_or_loop(q, start_datetime=None):
                             start_time=start, 
                             tweet_fields=['id', 'created_at', 'author_id', 'entities', 'lang', 'public_metrics'],
                             user_fields=['public_metrics'])
-        #logging.log(logging.INFO, "fetched %d tweets", len(resp.data))
+        logging.log(logging.INFO, "fetched %d tweets", len(resp.data))
         results.append(resp)
         next_token = resp.meta.get('next_token', None)
         if next_token is None:
@@ -65,25 +62,26 @@ def parse_tweets(results):
     for result in results:
         authors = result.includes.get('users',[])
         for r in result.data:
-            arxiv_pids = extract_arxiv_pids(r)
-            if not arxiv_pids: continue # nothing we know about here, lets move on
-            author = next(a for a in authors if a.id == r.author_id)
+          print("r", r)
+          eprint_pids = extract_eprint_pids(r)
+          if not eprint_pids: continue # nothing we know about here, lets move on
+          author = next(a for a in authors if a.id == r.author_id)
 
-            # create the tweet. intentionally making it flat here without user nesting
-            tweet = {}
-            tweet['id'] = str(r.id)
-            tweet['pids'] = arxiv_pids # arxiv paper ids mentioned in this tweet
-            tweet['inserted_at_date'] = datetime.datetime.utcnow().isoformat()
-            tweet['created_at_date'] = r.created_at.isoformat()
-            tweet['created_at_time'] = int(time.mktime(r.created_at.timetuple()))
-            tweet['lang'] = r.lang
-            tweet['text'] = r.text
-            tweet['retweet_count'] = r.public_metrics.get('retweet_count',0)
-            tweet['reply_count'] = r.public_metrics.get('reply_count',0)
-            tweet['like_count'] = r.public_metrics.get('like_count',0)
-            tweet['quote_count'] = r.public_metrics.get('quote_count',0)
-            tweet['user_screen_name'] = author.username
-            tweet['user_followers_count'] = author.get('public_metrics',{}).get('followers_count',0)
-            tweet['user_following_count'] = author.get('public_metrics',{}).get('following_count',0) 
-            tweets.append(tweet)
+          # create the tweet. intentionally making it flat here without user nesting
+          tweet = {}
+          tweet['id'] = str(r.id)
+          tweet['pids'] = eprint_pids # arxiv paper ids mentioned in this tweet
+          tweet['inserted_at_date'] = datetime.datetime.utcnow().isoformat()
+          tweet['created_at_date'] = r.created_at.isoformat()
+          tweet['created_at_time'] = int(time.mktime(r.created_at.timetuple()))
+          tweet['lang'] = r.lang
+          tweet['text'] = r.text
+          tweet['retweet_count'] = r.public_metrics.get('retweet_count',0)
+          tweet['reply_count'] = r.public_metrics.get('reply_count',0)
+          tweet['like_count'] = r.public_metrics.get('like_count',0)
+          tweet['quote_count'] = r.public_metrics.get('quote_count',0)
+          tweet['user_screen_name'] = author.username
+          tweet['user_followers_count'] = author.get('public_metrics',{}).get('followers_count',0)
+          tweet['user_following_count'] = author.get('public_metrics',{}).get('following_count',0) 
+          tweets.append(tweet)
     return tweets
