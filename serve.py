@@ -99,16 +99,17 @@ def render_pid(pid):
     tags = get_tags()
     d = pdb[pid]
     nice_date = "{:%d %b %Y}".format(parse_date_string(d['date'][1]))
-    thumb_path = 'static/thumb/' + d['identifier'][0].split('eprint.iacr.org/')[1] + '.jpg'
+    nice_pid = d['identifier'][0].split('eprint.iacr.org/')[1]
+    thumb_path = 'static/thumb/' + nice_pid + '.jpg'
     thumb_url = thumb_path if os.path.isfile(thumb_path) else ''
     return dict(
         weight = 0.0,
-        id = d['identifier'][0].split('eprint.iacr.org/')[1],
+        id = nice_pid,
         title = d['title'][0],
         time = nice_date,
         authors = ', '.join(d['creator']),
         tags = ', '.join(d['subject']),
-        utags = [t for t, pids in tags.items() if pid in pids],
+        utags = [t for t, pids in tags.items() if nice_pid in pids],
         summary = d['description'],
         thumb_url = thumb_url,
     )
