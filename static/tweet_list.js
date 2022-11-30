@@ -26,6 +26,6 @@ const TweetList = props => {
 }
 
 var elt = document.getElementById('tweetwrap');
-if(elt) {
+if(elt && document.readyState === 'complete') {
     ReactDOM.render(<TweetList tweets={tweets} tweets_desc={tweets_desc} />, elt);
 }

@@ -5,6 +5,5 @@ up:
 	python3 compute.py
 	python3 twitter_daemon.py
 
-# I use this to run the server
-fun:
-	export FLASK_APP=serve.py; flask run
+fun_prod:
+	gunicorn -w 4 'serve:app' --daemon --bind 0.0.0.0:8000

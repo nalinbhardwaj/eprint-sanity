@@ -8,3 +8,6 @@ venv
 tmp
 launch.json
 twitter.txt
+static/thumb
+thumb.txt
+cron-logs.txt

@@ -62,7 +62,7 @@ def parse_tweets(results):
     for result in results:
         authors = result.includes.get('users',[])
         for r in result.data:
-          print("r", r)
+          # print("r", r)
           eprint_pids = extract_eprint_pids(r)
           if not eprint_pids: continue # nothing we know about here, lets move on
           author = next(a for a in authors if a.id == r.author_id)

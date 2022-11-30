@@ -60,7 +60,7 @@ if __name__ == '__main__':
         header, metadata = record[0], record[1]
         metadata = metadata.__dict__['_map']
 
-        print(i, metadata)
+        # print(i, metadata)
 
         pid = metadata['identifier'][0]
         if pid in pdb:

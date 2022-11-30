@@ -27,13 +27,13 @@ n = len(pdb)
 mdb = get_metas_db()
 metas = list(mdb.items())
 metas.sort(key=lambda kv: kv[1]['date'], reverse=True) # most recent papers first
-keys = [k for k,v in metas[:5000]] # only the most recent papers
+keys = [k for k,v in metas[:25]] # only the most recent papers
 
 for i, key in enumerate(keys):
     time.sleep(0.01) # for safety
 
     # the path where we would store the thumbnail for this key
-    thumb_path = os.path.join(THUMB_DIR, key + '.jpg')
+    thumb_path = os.path.join(THUMB_DIR, key.split('https://eprint.iacr.org/')[1] + '.jpg')
     if os.path.exists(thumb_path):
         continue
 
